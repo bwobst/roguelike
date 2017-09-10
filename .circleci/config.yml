@@ -1,0 +1,23 @@
+version: 2
+jobs:
+  build:
+    branches:
+      only:
+        - master
+    docker:
+      - image: circleci/node:6
+    working_directory: ~/roguelike
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+      - run: yarn
+      - save_cache:
+          key: dependency-cache-{{ checksum "yarn.lock" }}
+          paths:
+            - .node_modules
+      - run: yarn test
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y awscli
+      - run: yarn build
+      - run: aws s3 sync ~/roguelike/build s3://roguelike.brianwobst.com --region us-east-1
